@@ -60,28 +60,29 @@ function isInsertedByThisExtension(node: jsonc.Node) {
   );
 }
 
-async function backupKeybindingFile(keybindingsUri: vscode.Uri): Promise<vscode.Uri> {
+async function backupKeybindingFile(
+  keybindingsUri: vscode.Uri
+): Promise<vscode.Uri> {
   // create backup under ~/.vscode/keybinginds_backup
   const now = new Date();
   const backupFile = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}--${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}_keybindings.json`;
   vscode.workspace.fs.createDirectory(vscode.Uri.file(backupDir));
   const target = vscode.Uri.file(path.join(backupDir, backupFile));
-  await vscode.workspace.fs.copy(
-    keybindingsUri,
-    target,
-    { overwrite: false }
-  );
+  await vscode.workspace.fs.copy(keybindingsUri, target, { overwrite: false });
   return target;
 }
 
-async function restoreKeybindingBackup(backupUri: vscode.Uri, keybindingsUri: vscode.Uri) {
+async function restoreKeybindingBackup(
+  backupUri: vscode.Uri,
+  keybindingsUri: vscode.Uri
+) {
   const newBackup = await backupKeybindingFile(keybindingsUri);
-  await vscode.workspace.fs.copy(
-    backupUri,
-    keybindingsUri,
-    { overwrite: true }
+  await vscode.workspace.fs.copy(backupUri, keybindingsUri, {
+    overwrite: true,
+  });
+  vscode.window.showInformationMessage(
+    `Backup ${backupUri.fsPath} was restored. Existing keybinding was backuped to ${newBackup.fsPath}.`
   );
-  vscode.window.showInformationMessage(`Backup ${backupUri.fsPath} was restored. Existing keybinding was backuped to ${newBackup.fsPath}.`);
 }
 
 async function getGlobalKeybindingsUri(): Promise<vscode.Uri | undefined> {
@@ -94,8 +95,7 @@ async function getGlobalKeybindingsUri(): Promise<vscode.Uri | undefined> {
     .map((tab) => (tab.input as any).uri as vscode.Uri);
   const globalKeybindingsUri = tabUris.find(
     (uri) =>
-      uri.scheme === "vscode-userdata" &&
-      uri.path.endsWith("/keybindings.json")
+      uri.scheme === "vscode-userdata" && uri.path.endsWith("/keybindings.json")
   );
   return globalKeybindingsUri;
 }
@@ -103,154 +103,190 @@ async function getGlobalKeybindingsUri(): Promise<vscode.Uri | undefined> {
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(vscode.commands.registerCommand(
-    "disable-keyshortcut.restore-keybindings-backup",
-    async () => {
-      const globalKeybindingsUri = await getGlobalKeybindingsUri();
-      if (!globalKeybindingsUri) {
-        return;
-      }
-      const backups = await vscode.workspace.fs.readDirectory(vscode.Uri.file(backupDir))
-      .then(items => items
-        .filter(item => item[1] == vscode.FileType.File && item[0].endsWith("_keybindings.json"))
-        .map(item => item[0])
-      );
-      const backup = await vscode.window.showQuickPick(backups, {
-        title: "Select version to restore",
-      });
-      if (backup) {
-        await restoreKeybindingBackup(vscode.Uri.file(backup), globalKeybindingsUri);
-      }
-  }));
-
-  context.subscriptions.push(vscode.commands.registerCommand(
-    "disable-keyshortcut.disable-extension-keybindings",
-    async () => {
-      const globalKeybindingsUri = await getGlobalKeybindingsUri();
-      if (!globalKeybindingsUri) {
-        return;
-      }
-      {
-        // create backup under ~/.vscode/keybinginds_backup
-        const now = new Date();
-        const backupDir = path.join(homedir(), ".vscode", "keybindings_backup");
-        const backupFile = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}--${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}_keybindings.json`;
-        vscode.workspace.fs.createDirectory(vscode.Uri.file(backupDir));
-        await vscode.workspace.fs.copy(
-          globalKeybindingsUri,
-          vscode.Uri.file(path.join(backupDir, backupFile)),
-          { overwrite: false }
-        );
-      }
-      const currentCustomKeybindingJSONString = await (async () => {
-        // load existing custom keybindings and delete setting registered by this
-        const currentKeybindingJSONString = await vscode.workspace.fs
-          .readFile(globalKeybindingsUri)
-          .then((byteContent) => new TextDecoder().decode(byteContent));
-        const currentKeybindingJSON = jsonc.parseTree(
-          currentKeybindingJSONString
-        );
-        let newKeybindingJSONString = currentKeybindingJSONString;
-        if (currentKeybindingJSON && currentKeybindingJSON.type === "array") {
-          // delete exisiting
-          const indicesToDelete =
-            currentKeybindingJSON.children
-              ?.filter(isInsertedByThisExtension)
-              .map((item) => jsonc.getNodePath(item).at(0))
-              .filter((index) => typeof index === "number")
-              .map((item) => item as number) || [];
-          console.log("delete", indicesToDelete);
-          indicesToDelete
-            .sort((a, b) => b - a) // dec
-            .forEach((i) => {
-              const edits = jsonc.modify(
-                newKeybindingJSONString,
-                [i],
-                undefined,
-                {
-                  formattingOptions: {
-                    tabSize: 4,
-                    insertSpaces: true,
-                  },
-                }
-              );
-              newKeybindingJSONString = jsonc.applyEdits(
-                newKeybindingJSONString,
-                edits
-              );
-            });
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "disable-keyshortcut.delete-all-backups",
+      async () => {
+        const backups = await vscode.workspace.fs
+          .readDirectory(vscode.Uri.file(backupDir))
+          .then((items) =>
+            items
+              .filter(
+                (item) =>
+                  item[1] == vscode.FileType.File &&
+                  item[0].endsWith("_keybindings.json")
+              )
+              .map((item) => item[0])
+          );
+        if (backups.length == 0) {
+          vscode.window.showInformationMessage("No backups found");
+          return;
         }
-        return newKeybindingJSONString;
-      })();
-      console.info("Preserving", currentCustomKeybindingJSONString);
-      {
-        // disable all extension keybind settings
-        const allKeybindings = collectKeybindings();
-        const validateConfig = (value: any) =>
-          Array.isArray(value) &&
-          value.map((v) => typeof v === "string").reduce((a, b) => a && b, true)
-            ? value
-            : [];
-        const extensionsToPreserve: Array<string> = validateConfig(
-          vscode.workspace
-            .getConfiguration("disable-keyshortcut")
-            .get("extensionsToPreserve")
-        );
-        const commandsToPreserve: Array<string> = validateConfig(
-          vscode.workspace
-            .getConfiguration("disable-keyshortcut")
-            .get("commandsToPreserve")
-        );
-
-        const keybindingsToDisable = allKeybindings
-          .filter(
-            (kb) =>
-              !extensionsToPreserve
-                .map((re) => kb.extensionId.match(re) !== null)
-                .reduce((a, b) => a || b, false)
-          )
-          .filter(
-            (kb) =>
-              !commandsToPreserve
-                .map((re) => kb.command.match(re) !== null)
-                .reduce((a, b) => a || b, false)
-          );
-        let newKeybindingJSONString = currentCustomKeybindingJSONString;
-        let i =
-          jsonc.parseTree(currentCustomKeybindingJSONString)?.children
-            ?.length || 0;
-        // insert disable setting
-        keybindingsToDisable.forEach((keybinding) => {
-          const edits = jsonc.modify(
-            newKeybindingJSONString,
-            [i],
-            {
-              key: keybinding.key,
-              command: "-" + keybinding.command,
-              extensionId: keybinding.extensionId,
-              note: "Registered by disable-keyshortcut extension",
-            },
-            {
-              formattingOptions: {
-                tabSize: 4,
-                insertSpaces: true,
-              },
-              isArrayInsertion: true,
-            }
-          );
-          newKeybindingJSONString = jsonc.applyEdits(
-            newKeybindingJSONString,
-            edits
-          );
-          i++;
+        const answer = await vscode.window.showQuickPick(["Cancel", "Yes"], {
+          title: `Do you want to delete ${backups.length} keybindings.json backups taken by this extension?`,
         });
-        await vscode.workspace.fs.writeFile(
-          globalKeybindingsUri,
-          new TextEncoder().encode(newKeybindingJSONString)
-        );
+        if (answer === "Yes") {
+          backups.forEach((backup) => {
+            vscode.workspace.fs.delete(
+              vscode.Uri.file(path.join(backupDir, backup)),
+              { useTrash: true }
+            );
+          });
+        }
       }
-    }
-  ));
+    )
+  );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "disable-keyshortcut.restore-keybindings-backup",
+      async () => {
+        const globalKeybindingsUri = await getGlobalKeybindingsUri();
+        if (!globalKeybindingsUri) {
+          return;
+        }
+        const backups = await vscode.workspace.fs
+          .readDirectory(vscode.Uri.file(backupDir))
+          .then((items) =>
+            items
+              .filter(
+                (item) =>
+                  item[1] == vscode.FileType.File &&
+                  item[0].endsWith("_keybindings.json")
+              )
+              .map((item) => item[0])
+          );
+        const backup = await vscode.window.showQuickPick(backups, {
+          title: "Select version to restore",
+        });
+        if (backup) {
+          await restoreKeybindingBackup(
+            vscode.Uri.file(path.join(backupDir, backup)),
+            globalKeybindingsUri
+          );
+        }
+      }
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "disable-keyshortcut.disable-extension-keybindings",
+      async () => {
+        const globalKeybindingsUri = await getGlobalKeybindingsUri();
+        if (!globalKeybindingsUri) {
+          return;
+        }
+        await backupKeybindingFile(globalKeybindingsUri);
+        const currentCustomKeybindingJSONString = await (async () => {
+          // load existing custom keybindings and delete setting registered by this
+          const currentKeybindingJSONString = await vscode.workspace.fs
+            .readFile(globalKeybindingsUri)
+            .then((byteContent) => new TextDecoder().decode(byteContent));
+          const currentKeybindingJSON = jsonc.parseTree(
+            currentKeybindingJSONString
+          );
+          let newKeybindingJSONString = currentKeybindingJSONString;
+          if (currentKeybindingJSON && currentKeybindingJSON.type === "array") {
+            // delete exisiting
+            const indicesToDelete =
+              currentKeybindingJSON.children
+                ?.filter(isInsertedByThisExtension)
+                .map((item) => jsonc.getNodePath(item).at(0))
+                .filter((index) => typeof index === "number")
+                .map((item) => item as number) || [];
+            indicesToDelete
+              .sort((a, b) => b - a) // dec
+              .forEach((i) => {
+                const edits = jsonc.modify(
+                  newKeybindingJSONString,
+                  [i],
+                  undefined,
+                  {
+                    formattingOptions: {
+                      tabSize: 4,
+                      insertSpaces: true,
+                    },
+                  }
+                );
+                newKeybindingJSONString = jsonc.applyEdits(
+                  newKeybindingJSONString,
+                  edits
+                );
+              });
+          }
+          return newKeybindingJSONString;
+        })();
+        {
+          // disable all extension keybind settings
+          const allKeybindings = collectKeybindings();
+          const validateConfig = (value: any) =>
+            Array.isArray(value) &&
+            value
+              .map((v) => typeof v === "string")
+              .reduce((a, b) => a && b, true)
+              ? value
+              : [];
+          const extensionsToPreserve: Array<string> = validateConfig(
+            vscode.workspace
+              .getConfiguration("disable-keyshortcut")
+              .get("extensionsToPreserve")
+          );
+          const commandsToPreserve: Array<string> = validateConfig(
+            vscode.workspace
+              .getConfiguration("disable-keyshortcut")
+              .get("commandsToPreserve")
+          );
+
+          const keybindingsToDisable = allKeybindings
+            .filter(
+              (kb) =>
+                !extensionsToPreserve
+                  .map((re) => kb.extensionId.match(re) !== null)
+                  .reduce((a, b) => a || b, false)
+            )
+            .filter(
+              (kb) =>
+                !commandsToPreserve
+                  .map((re) => kb.command.match(re) !== null)
+                  .reduce((a, b) => a || b, false)
+            );
+          let newKeybindingJSONString = currentCustomKeybindingJSONString;
+          let i =
+            jsonc.parseTree(currentCustomKeybindingJSONString)?.children
+              ?.length || 0;
+          // insert disable setting
+          keybindingsToDisable.forEach((keybinding) => {
+            const edits = jsonc.modify(
+              newKeybindingJSONString,
+              [i],
+              {
+                key: keybinding.key,
+                command: "-" + keybinding.command,
+                extensionId: keybinding.extensionId,
+                note: "Registered by disable-keyshortcut extension",
+              },
+              {
+                formattingOptions: {
+                  tabSize: 4,
+                  insertSpaces: true,
+                },
+                isArrayInsertion: true,
+              }
+            );
+            newKeybindingJSONString = jsonc.applyEdits(
+              newKeybindingJSONString,
+              edits
+            );
+            i++;
+          });
+          await vscode.workspace.fs.writeFile(
+            globalKeybindingsUri,
+            new TextEncoder().encode(newKeybindingJSONString)
+          );
+        }
+      }
+    )
+  );
 }
 
 // This method is called when your extension is deactivated

@@ -22,6 +22,10 @@
       {
         "command": "disable-keyshortcut.restore-keybindings-backup",
         "title": "Restore original keybindings.json file which was overwritten by ths extension"
+      },
+      {
+        "command": "disable-keyshortcut.delete-all-backups",
+        "title": "Delete all keybindings.json backups taken before overwriting setting"
       }
     ],
     "configuration":{
