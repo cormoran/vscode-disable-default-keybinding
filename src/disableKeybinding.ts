@@ -1,6 +1,12 @@
 import * as jsonc from "jsonc-parser";
 import { TextDecoder, TextEncoder } from "util";
 import * as vscode from "vscode";
+import { backupKeybindingFile } from "./backup";
+import {
+  getCommandsToPreserveKeybinding,
+  getExtensionsToPreserveKeybinding,
+} from "./config";
+import { openAndGetGlobalKeybindingsUri } from "./customKeybinding";
 import { collectAllDefaultKeybindings, Keybinding } from "./defaultKeybinding";
 /**
  * Get string value of given key from given object node.
@@ -164,4 +170,25 @@ export async function disableDefaultKeybindings(
     globalKeybindingsUri,
     new TextEncoder().encode(newKeybindingJSONString)
   );
+}
+
+export async function confirmAndDisableDefaultKeybindings(backupDir: string) {
+  const globalKeybindingsUri = await openAndGetGlobalKeybindingsUri();
+  if (!globalKeybindingsUri) {
+    return;
+  }
+  const answer = await vscode.window.showQuickPick(["Cancel", "Yes"], {
+    title: `This command will update your custom keybindings.json after backup. Will you proceed?`,
+  });
+  if (answer === "Yes") {
+    await backupKeybindingFile(globalKeybindingsUri, backupDir);
+    await disableDefaultKeybindings(
+      globalKeybindingsUri,
+      getExtensionsToPreserveKeybinding(),
+      getCommandsToPreserveKeybinding()
+    );
+    vscode.window.showInformationMessage(`keybindings.json is updated.`);
+  } else {
+    vscode.window.showInformationMessage(`answer ${answer}`);
+  }
 }
