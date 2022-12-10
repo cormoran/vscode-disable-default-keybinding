@@ -2,26 +2,27 @@
 
 This extension provides command to disable annoying default keybindings registered by other extensions.
 
-## Commands
+## Command `disable-default-keybindings`
 
-### `disable-default-keybinding.disable-default-keybindings`
-
-This command adds settings to your `keybindings.json` to disable keybindings registered by other extensions.
+This command adds settings to the bottom of your `keybindings.json` to disable keybindings registered by other extensions.
 
 Following properties are supported to specify keybindings to preserve.
 
-- `disable-default-keybinding.extensionsToPreserve`: specify extensionIds to preserve all of their keybindings.
-  -  e.g. `["^vscode\\..+$", "^tuttieee\\.emacs-mcx$"]`
-    - `"^vscode\\..+$"` to keep vscode's default keybinginds
-    - `"^tuttieee\\.emacs-mcx$"` to keep your emacs keybindings
-- `disable-default-keybinding.commandsToPreserve`: specify command name to preserve keybinding
+```jsonc
+// specify extensionIds to preserve all of their keybindings.
+//  "^vscode\\..+$" to keep vscode's default keybinginds
+//  "^tuttieee\\.emacs-mcx$" to keep your emacs keybindings
+"disable-default-keybinding.extensionsToPreserve": ["^vscode\\..+$", "^tuttieee\\.emacs-mcx$"]
+// specify command name to preserve keybinding
+"disable-default-keybinding.commandsToPreserve": ["^workbench\\.action\\.quickOpen$"]
+```
 
-### `disable-default-keybinding.restore-keybindings-backup`
+## Command `restore-keybindings-backup`
 
 `disable-default-keybinding.disable-default-keybindings` takes backup of `keybindings.json` before modifying the contents.
 This commands restores `keybindings.json` from the backup.
 It is useful if you mistakenly disabled too many keybindings.
 
-### `disable-default-keybinding.delete-all-backups`
+## Command `delete-all-backups`
 
 Delete all keybindings.json backups taken before overwriting setting.
