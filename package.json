@@ -24,15 +24,15 @@
     "commands": [
       {
         "command": "disable-default-keybinding.disable-default-keybindings",
-        "title": "Disable default keybindings registered by other extensions"
+        "title": "Disable default keybinding: Disable default keybindings"
       },
       {
         "command": "disable-default-keybinding.restore-keybindings-backup",
-        "title": "Restore original keybindings.json file which was overwritten by ths extension"
+        "title": "Disable default keybinding: Restore from backup"
       },
       {
         "command": "disable-default-keybinding.delete-all-backups",
-        "title": "Delete all keybindings.json backups taken before overwriting setting"
+        "title": "Disable default keybinding: Delete all backups"
       }
     ],
     "configuration": {
