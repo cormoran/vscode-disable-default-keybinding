@@ -9,7 +9,7 @@ suite('Extension Test Suite', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 
 	test('Disable all keybindings', async () => {
-		await vscode.commands.executeCommand('disable-keyshortcut.disable-extension-keybindings');
-		await vscode.commands.executeCommand('disable-keyshortcut.delete-all-backups');
+		await vscode.commands.executeCommand('disable-default-keybinding.disable-extension-keybindings');
+		await vscode.commands.executeCommand('disable-default-keybinding.delete-all-backups');
 	});
 });

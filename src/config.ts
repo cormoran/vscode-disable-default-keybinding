@@ -1,6 +1,6 @@
 import {workspace} from "vscode";
 
-const SECTION = "disable-keyshortcut";
+const SECTION = "disable-default-keybinding";
 
 function validateConfig(value: any) {
   return Array.isArray(value) &&

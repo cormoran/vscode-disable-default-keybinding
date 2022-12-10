@@ -1,6 +1,6 @@
 {
-  "name": "disable-keyshortcut",
-  "displayName": "disable-keyshortcut",
+  "name": "disable-default-keybinding",
+  "displayName": "disable-default-keybinding",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -10,33 +10,33 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:disable-keyshortcut.disable-extension-keybindings"
+    "onCommand:disable-default-keybinding.disable-extension-keybindings"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "disable-keyshortcut.disable-extension-keybindings",
-        "title": "Disable extension keybindings"
+        "command": "disable-default-keybinding.disable-extension-keybindings",
+        "title": "Disable default keybindings registered by other extensions"
       },
       {
-        "command": "disable-keyshortcut.restore-keybindings-backup",
+        "command": "disable-default-keybinding.restore-keybindings-backup",
         "title": "Restore original keybindings.json file which was overwritten by ths extension"
       },
       {
-        "command": "disable-keyshortcut.delete-all-backups",
+        "command": "disable-default-keybinding.delete-all-backups",
         "title": "Delete all keybindings.json backups taken before overwriting setting"
       }
     ],
     "configuration":{
       "title": "Disable default keybindings",
       "properties": {
-        "disable-keyshortcut.extensionsToPreserve": {
+        "disable-default-keybinding.extensionsToPreserve": {
           "type": "array",
           "default": ["^vscode\\..+$", "^tuttieee\\.emacs-mcx$"],
           "description": "Regex of extension ids to preserve their default keybindings."
         },
-        "disable-keyshortcut.commandsToPreserve": {
+        "disable-default-keybinding.commandsToPreserve": {
           "type": "array",
           "default": [],
           "description": "Regex of command names to preserve their default keybindings."

@@ -112,7 +112,7 @@ export function addKeybindingsToJSON(
         key: keybinding.key,
         command: (disable ? "-" : "") + keybinding.command,
         extensionId: keybinding.extensionId,
-        note: "Registered by disable-keyshortcut extension",
+        note: "Registered by disable-default-keybinding extension",
       },
       {
         formattingOptions: {

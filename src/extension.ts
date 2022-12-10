@@ -28,7 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        "disable-keyshortcut.delete-all-backups",
+        "disable-default-keybinding.delete-all-backups",
         async () => {
           deleteAllBackupFiles(backupDir);
         }
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        "disable-keyshortcut.restore-keybindings-backup",
+        "disable-default-keybinding.restore-keybindings-backup",
         async () => {
           const globalKeybindingsUri = await openAndGetGlobalKeybindingsUri();
           if (!globalKeybindingsUri) {
@@ -59,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
       vscode.commands.registerCommand(
-        "disable-keyshortcut.disable-extension-keybindings",
+        "disable-default-keybinding.disable-default-keybindings",
         async () => {
           const globalKeybindingsUri = await openAndGetGlobalKeybindingsUri();
           if (!globalKeybindingsUri) {
