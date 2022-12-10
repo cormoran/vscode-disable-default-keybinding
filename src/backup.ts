@@ -94,12 +94,14 @@ export async function deleteAllBackupFiles(backupDir: string) {
     title: `Do you want to delete ${backups.length} keybindings.json backups taken by this extension?`,
   });
   if (answer === "Yes") {
-    backups.forEach((backup) => {
-      vscode.workspace.fs.delete(
-        vscode.Uri.file(path.join(backupDir, backup)),
-        { useTrash: true }
-      );
-    });
+    await Promise.all(
+      backups.map((backup) => {
+        return vscode.workspace.fs.delete(
+          vscode.Uri.file(path.join(backupDir, backup)),
+          { useTrash: true }
+        );
+      })
+    );
   }
 }
 

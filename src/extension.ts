@@ -39,6 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
   registerCommand(COMMAND_DISABLE_KEYBINDINGS, async (config: Config) => {
     await confirmAndDisableDefaultKeybindings(config.backupDir);
   });
+  return configFuture;
 }
 
 // This method is called when your extension is deactivated
