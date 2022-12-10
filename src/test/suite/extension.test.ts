@@ -193,6 +193,25 @@ suite("Extension Test Suite", () => {
       .getConfiguration(SECTION)
       .update(COMMANDS_TO_PRESERVE, [], vscode.ConfigurationTarget.Global);
 
+    const customKeybindingsUri = await openAndGetGlobalKeybindingsUri();
+    if (!customKeybindingsUri) {
+      assert.fail();
+    }
+    const initialKeybindingsJSONCString = `[
+        {
+            "key": "alt+g alt+g",
+            "command": "workbench.action.gotoLine"
+        },
+        {
+            "key": "cmd+j",
+            "command": "workbench.action.terminal.toggleTerminal"
+        }
+    ]`;
+    await vscode.workspace.fs.writeFile(
+      customKeybindingsUri,
+      new TextEncoder().encode(initialKeybindingsJSONCString)
+    );
+
     const quickPick = sandbox.stub(vscode.window, "showQuickPick") as any;
     quickPick.resolves("Yes");
     const future = await vscode.commands.executeCommand(
@@ -200,10 +219,6 @@ suite("Extension Test Suite", () => {
     );
     await future;
 
-    const customKeybindingsUri = await openAndGetGlobalKeybindingsUri();
-    if (!customKeybindingsUri) {
-      assert.fail();
-    }
     const customKeybindingsJSONCString = await vscode.workspace.fs
       .readFile(customKeybindingsUri)
       .then((byteContent) => new TextDecoder().decode(byteContent));
@@ -216,6 +231,19 @@ suite("Extension Test Suite", () => {
       assert(keybinding.hasOwnProperty("key"));
       assert(keybinding.hasOwnProperty("command"));
     });
+
+    let myCustomKeybindings: Array<Keybinding> = [
+      {
+        key: "alt+g alt+g",
+        command: "workbench.action.gotoLine",
+        extensionId: undefined,
+      },
+      {
+        key: "cmd+j",
+        command: "workbench.action.terminal.toggleTerminal",
+        extensionId: undefined,
+      },
+    ];
 
     let vscodeKeybindings: Array<Keybinding> = [
       {
@@ -240,14 +268,15 @@ suite("Extension Test Suite", () => {
       ]);
     }
 
-    vscodeKeybindings.forEach((keybinding) => {
+    vscodeKeybindings.concat(myCustomKeybindings).forEach((keybinding) => {
       assert(
         (customKeybinding as Array<any>).find(
           (kb) =>
             keybinding.extensionId === kb.extensionId &&
             keybinding.command === kb.command &&
             keybinding.key === kb.key
-        )
+        ),
+        `${JSON.stringify(keybinding)} not found in keybindings.json`
       );
     });
   });

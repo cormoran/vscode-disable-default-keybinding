@@ -42,7 +42,7 @@ export function isKeybindingRegisteredByExtension(
   extensionsRegex: string[]
 ) {
   return extensionsRegex
-    .map((re) => keybinding.extensionId.match(re) !== null)
+    .map((re) => keybinding.extensionId?.match(re) !== null)
     .reduce((a, b) => a || b, false);
 }
 

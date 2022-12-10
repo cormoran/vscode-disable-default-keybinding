@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 export interface Keybinding {
   key: String;
   command: String;
-  extensionId: String;
+  extensionId: String | undefined;
 }
 
 /**
