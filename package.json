@@ -4,6 +4,7 @@
   "description": "vscode extension to disable default keybindings registered by other extensions",
   "version": "0.0.1",
   "publisher": "cormoran",
+  "repository": "https://github.com/cormoran/vscode-disable-default-keybinding",
   "engines": {
     "vscode": "^1.73.0"
   },
