@@ -18,7 +18,7 @@ import path = require("path");
 
 function getThisExtension() {
   const thisExtension = vscode.extensions.getExtension(
-    "undefined_publisher." + myExtension.EXTENSION_NAME
+    "cormoran." + myExtension.EXTENSION_NAME
   );
 
   if (!thisExtension) {
