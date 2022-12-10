@@ -1,3 +1,5 @@
+[![Test](https://github.com/cormoran/vscode-disable-default-keybinding/actions/workflows/test.yml/badge.svg)](https://github.com/cormoran/vscode-disable-default-keybinding/actions/workflows/test.yml)
+
 # Disable Default Keybindings Extension for vscode
 
 This extension provides command to disable annoying default keybindings registered by other extensions.
