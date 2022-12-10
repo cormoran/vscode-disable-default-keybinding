@@ -16,7 +16,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "disable-default-keybinding.disable-extension-keybindings",
+        "command": "disable-default-keybinding.disable-default-keybindings",
         "title": "Disable default keybindings registered by other extensions"
       },
       {
