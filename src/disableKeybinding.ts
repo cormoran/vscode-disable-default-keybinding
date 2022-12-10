@@ -8,6 +8,9 @@ import {
 } from "./config";
 import { openAndGetGlobalKeybindingsUri } from "./customKeybinding";
 import { collectAllDefaultKeybindings, Keybinding } from "./defaultKeybinding";
+
+const REGISTERED_BY = "cormoran.disable-default-keybinding";
+
 /**
  * Get string value of given key from given object node.
  */
@@ -33,7 +36,7 @@ function isInsertedByThisExtension(node: jsonc.Node) {
     getObjectNodeValue(node, "key") !== undefined &&
     getObjectNodeValue(node, "command") !== undefined &&
     getObjectNodeValue(node, "extensionId") !== undefined &&
-    getObjectNodeValue(node, "note") !== undefined
+    getObjectNodeValue(node, "registeredBy") === REGISTERED_BY
   );
 }
 
@@ -118,7 +121,7 @@ export function addKeybindingsToJSON(
         key: keybinding.key,
         command: (disable ? "-" : "") + keybinding.command,
         extensionId: keybinding.extensionId,
-        note: "Registered by disable-default-keybinding extension",
+        registeredBy: REGISTERED_BY,
       },
       {
         formattingOptions: {
