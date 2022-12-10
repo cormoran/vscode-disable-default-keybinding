@@ -8,8 +8,8 @@ import * as vscode from 'vscode';
 suite('Extension Test Suite', () => {
 	vscode.window.showInformationMessage('Start all tests.');
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+	test('Disable all keybindings', async () => {
+		await vscode.commands.executeCommand('disable-keyshortcut.disable-extension-keybindings');
+		await vscode.commands.executeCommand('disable-keyshortcut.delete-all-backups');
 	});
 });
