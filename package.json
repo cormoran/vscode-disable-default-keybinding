@@ -1,17 +1,23 @@
 {
   "name": "disable-default-keybinding",
-  "displayName": "disable-default-keybinding",
-  "description": "",
+  "displayName": "Disable Default Keybindings",
+  "description": "vscode extension to disable default keybindings registered by other extensions",
   "version": "0.0.1",
+  "publisher": "cormoran",
   "engines": {
     "vscode": "^1.73.0"
   },
   "categories": [
-    "Other"
+    "Keymaps"
   ],
-  "activationEvents": [
-    "onCommand:disable-default-keybinding.disable-extension-keybindings"
+  "keywords": [
+    "disable",
+    "keybindings",
+    "shortcuts",
+    "delete",
+    "remove"
   ],
+  "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -48,6 +54,9 @@
       }
     }
   },
+  "extensionKind": [
+    "ui"
+  ],
   "scripts": {
     "vscode:prepublish": "npm run package",
     "compile": "webpack",

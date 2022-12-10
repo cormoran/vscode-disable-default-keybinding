@@ -1,4 +1,4 @@
-# vscode disable-default-keybinding extension
+# Disable Default Keybindings Extension for vscode
 
 This extension provides command to disable annoying default keybindings registered by other extensions.
 
