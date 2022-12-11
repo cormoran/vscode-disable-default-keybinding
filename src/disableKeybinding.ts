@@ -9,7 +9,7 @@ import {
 import { openAndGetGlobalKeybindingsUri } from "./customKeybinding";
 import { collectAllDefaultKeybindings, Keybinding } from "./defaultKeybinding";
 
-const REGISTERED_BY = "cormoran.disable-default-keybinding";
+export const REGISTERED_BY = "cormoran.disable-default-keybinding";
 
 /**
  * Get string value of given key from given object node.
@@ -68,8 +68,13 @@ export function filterOutKeybindingsRegisteredByThisExtension(
   customKeybindingJSONString: string
 ) {
   const customKeybindingJSON = jsonc.parseTree(customKeybindingJSONString);
+  if (!customKeybindingJSON) {
+    throw Error(
+      `Failed to parse keybindings as jsonc: ${customKeybindingJSONString}`
+    );
+  }
   let newKeybindingJSONString = customKeybindingJSONString;
-  if (customKeybindingJSON && customKeybindingJSON.type === "array") {
+  if (customKeybindingJSON.type === "array") {
     // delete existing
     const indicesToDelete =
       customKeybindingJSON.children
@@ -91,6 +96,10 @@ export function filterOutKeybindingsRegisteredByThisExtension(
           edits
         );
       });
+  } else {
+    throw Error(
+      `Content of keybindings file is not array: ${customKeybindingJSONString}`
+    );
   }
   return newKeybindingJSONString;
 }
@@ -191,7 +200,5 @@ export async function confirmAndDisableDefaultKeybindings(backupDir: string) {
       getCommandsToPreserveKeybinding()
     );
     vscode.window.showInformationMessage(`keybindings.json is updated.`);
-  } else {
-    vscode.window.showInformationMessage(`answer ${answer}`);
   }
 }

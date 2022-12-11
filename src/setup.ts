@@ -11,7 +11,6 @@ export async function setup(context: vscode.ExtensionContext): Promise<Config> {
     context.globalStorageUri.fsPath,
     "keybindings_backup"
   );
-  vscode.window.showInformationMessage("setup finished!");
   return {
     backupDir: backupDir,
   };
