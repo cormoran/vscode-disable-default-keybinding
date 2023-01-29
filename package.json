@@ -18,7 +18,9 @@
     "delete",
     "remove"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -51,6 +53,11 @@
           "type": "array",
           "default": [],
           "description": "Regex of command names to preserve their default keybindings."
+        },
+        "disable-default-keybinding.runOnChange": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run disable-default-keybindings automatically if keybindings set changed (after installing/uninstalling,updating other extensions)"
         }
       }
     }

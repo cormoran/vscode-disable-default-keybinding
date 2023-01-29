@@ -3,7 +3,11 @@
 import * as vscode from "vscode";
 
 import { deleteAllBackupFiles, selectAndRestoreBackup } from "./backup";
-import { confirmAndDisableDefaultKeybindings } from "./disableKeybinding";
+import { getRunOnChange, SECTION } from "./config";
+import {
+  confirmAndDisableDefaultKeybindings,
+  disableDefaultKeybindingsIfChanged,
+} from "./disableKeybinding";
 import { Config, setup } from "./setup";
 
 export const EXTENSION_NAME = "disable-default-keybinding";
@@ -39,6 +43,37 @@ export function activate(context: vscode.ExtensionContext) {
   registerCommand(COMMAND_DISABLE_KEYBINDINGS, async (config: Config) => {
     await confirmAndDisableDefaultKeybindings(config.backupDir);
   });
+
+  let extensionOnChangeDisposable: vscode.Disposable | undefined = undefined;
+  const registerOrDisposeExtensionOnChangeCallback = async () => {
+    if (getRunOnChange()) {
+      if (extensionOnChangeDisposable === undefined) {
+        extensionOnChangeDisposable = vscode.extensions.onDidChange(
+          async () => {
+            const config = await configFuture;
+            await disableDefaultKeybindingsIfChanged(config.backupDir);
+          }
+        );
+        context.subscriptions.push(extensionOnChangeDisposable);
+      }
+    } else {
+      if (extensionOnChangeDisposable !== undefined) {
+        extensionOnChangeDisposable.dispose();
+        extensionOnChangeDisposable = undefined;
+      }
+    }
+  };
+  vscode.workspace.onDidChangeConfiguration(async (change) => {
+    if (change.affectsConfiguration(SECTION)) {
+      await registerOrDisposeExtensionOnChangeCallback();
+    }
+  });
+  registerOrDisposeExtensionOnChangeCallback();
+  if (getRunOnChange()) {
+    configFuture.then((config) => {
+      disableDefaultKeybindingsIfChanged(config.backupDir);
+    });
+  }
   return configFuture;
 }
 

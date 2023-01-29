@@ -146,21 +146,11 @@ export function addKeybindingsToJSON(
   return newKeybindingJSONString;
 }
 
-/**
- * Update keybindings file to disable all default keybindings.
- * @param globalKeybindingsUri uri of keybindings.json
- * @param extensionsToPreserve list of regex of extensionIds to preserve keybindings
- * @param commandsToPreserve list of regex of commands to preserve keybindings
- */
-export async function disableDefaultKeybindings(
-  globalKeybindingsUri: vscode.Uri,
+export async function buildNewKeybindingsJSONString(
+  currentAllCustomKeybindingsJSONString: string,
   extensionsToPreserve: string[],
   commandsToPreserve: string[]
 ) {
-  const currentAllCustomKeybindingsJSONString = await vscode.workspace.fs
-    .readFile(globalKeybindingsUri)
-    .then((byteContent) => new TextDecoder().decode(byteContent));
-
   const currentCustomKeybindingJSONString =
     filterOutKeybindingsRegisteredByThisExtension(
       currentAllCustomKeybindingsJSONString
@@ -173,15 +163,72 @@ export async function disableDefaultKeybindings(
     )
     .filter((kb) => !isKeybindingCommandMatches(kb, commandsToPreserve));
 
-  const newKeybindingJSONString = addKeybindingsToJSON(
+  return addKeybindingsToJSON(
     currentCustomKeybindingJSONString,
     keybindingsToDisable,
     true
   );
-  await vscode.workspace.fs.writeFile(
-    globalKeybindingsUri,
-    new TextEncoder().encode(newKeybindingJSONString)
+}
+
+/**
+ * Update keybindings file to disable all default keybindings.
+ * @param globalKeybindingsUri uri of keybindings.json
+ * @param extensionsToPreserve list of regex of extensionIds to preserve keybindings
+ * @param commandsToPreserve list of regex of commands to preserve keybindings
+ * @param executionDecider function to decide updating keybindings.json file. Called only when the change exists.
+ * @returns true if keybindings.json was updated. false if there is nothing to change or executionDecider returns false.
+ */
+export async function disableDefaultKeybindings(
+  globalKeybindingsUri: vscode.Uri,
+  extensionsToPreserve: string[],
+  commandsToPreserve: string[],
+  backupDir: string,
+  executionDecider: () => Promise<boolean>
+) {
+  const currentKeybindingsJSONString = await vscode.workspace.fs
+    .readFile(globalKeybindingsUri)
+    .then((byteContent) => new TextDecoder().decode(byteContent));
+  const newKeybindingJSONString = await buildNewKeybindingsJSONString(
+    currentKeybindingsJSONString,
+    extensionsToPreserve,
+    commandsToPreserve
   );
+  if (
+    currentKeybindingsJSONString !== newKeybindingJSONString &&
+    (await executionDecider())
+  ) {
+    await backupKeybindingFile(globalKeybindingsUri, backupDir);
+    await vscode.workspace.fs.writeFile(
+      globalKeybindingsUri,
+      new TextEncoder().encode(newKeybindingJSONString)
+    );
+    return true;
+  }
+  return false;
+}
+
+export async function disableDefaultKeybindingsIfChanged(backupDir: string) {
+  const globalKeybindingsUri = await openAndGetGlobalKeybindingsUri();
+  if (!globalKeybindingsUri) {
+    return;
+  }
+  const updated = await disableDefaultKeybindings(
+    globalKeybindingsUri,
+    getExtensionsToPreserveKeybinding(),
+    getCommandsToPreserveKeybinding(),
+    backupDir,
+    async () => {
+      const answer = await vscode.window.showQuickPick(["Skip", "Yes"], {
+        title: `Keybinding set was changed. Will you run disable-default-keybinding?`,
+      });
+      return answer === "Yes";
+    }
+  );
+  if (updated) {
+    vscode.window.showInformationMessage(
+      `keybindings.json was updated by disable-default-keybindings plugin.`
+    );
+  }
 }
 
 export async function confirmAndDisableDefaultKeybindings(backupDir: string) {
@@ -189,16 +236,23 @@ export async function confirmAndDisableDefaultKeybindings(backupDir: string) {
   if (!globalKeybindingsUri) {
     return;
   }
-  const answer = await vscode.window.showQuickPick(["Cancel", "Yes"], {
-    title: `This command will update your custom keybindings.json after backup. Will you proceed?`,
-  });
-  if (answer === "Yes") {
-    await backupKeybindingFile(globalKeybindingsUri, backupDir);
-    await disableDefaultKeybindings(
-      globalKeybindingsUri,
-      getExtensionsToPreserveKeybinding(),
-      getCommandsToPreserveKeybinding()
-    );
+  let yes = false; // TODO: ちゃんと実装する
+  const updated = await disableDefaultKeybindings(
+    globalKeybindingsUri,
+    getExtensionsToPreserveKeybinding(),
+    getCommandsToPreserveKeybinding(),
+    backupDir,
+    async () => {
+      const answer = await vscode.window.showQuickPick(["Cancel", "Yes"], {
+        title: `This command will update your custom keybindings.json after backup. Will you proceed?`,
+      });
+      yes = answer === "Yes";
+      return yes;
+    }
+  );
+  if (updated) {
     vscode.window.showInformationMessage(`keybindings.json is updated.`);
+  } else if (yes) {
+    vscode.window.showInformationMessage(`No keybindings to newly disable.`);
   }
 }

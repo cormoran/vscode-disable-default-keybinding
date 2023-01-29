@@ -157,6 +157,7 @@ if (!("withPythonExtension" in process.env)) {
     test(`${myExtension.COMMAND_DELETE_BACKUP} deletes all backups`, async () => {
       const config = await getThisExtension().activate();
       await disableKeybindings(sandbox);
+      await resetKeybindingsJSON();
       await disableKeybindings(sandbox);
       const backupDir = config.backupDir;
       const backupFiles = await collectBackupFiles(backupDir);
